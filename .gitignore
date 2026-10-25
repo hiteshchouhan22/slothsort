@@ -1,0 +1,5 @@
+__pycache__/
+.pytest_cache/
+*.pyc
+demo/messy/.slothsort-undo.json
+demo/messy/.slothsort-trace.jsonl

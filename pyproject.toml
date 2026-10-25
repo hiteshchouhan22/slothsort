@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "slothsort"
+version = "0.1.0"
+description = "A lazy file tidier powered by a local open-weight model (Ollama). Dry-run by default, undoable always."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Hitesh Chouhan" }]
+dependencies = []
+
+[project.scripts]
+slothsort = "slothsort.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["slothsort*"]

@@ -1,0 +1,109 @@
+name: SlothSort live demo (real model)
+
+# One-click heavy environment for the real Gemma demo:
+# installs Ollama, pulls the model, runs the agent harness against a sample
+# messy folder (plan -> apply -> undo), runs the test suite, and uploads the
+# full transcript + session trace as an artifact.
+#
+# Trigger it manually: GitHub repo -> Actions -> "SlothSort live demo" ->
+# Run workflow. Nothing here publishes anything.
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: "Ollama model to run the demo with"
+        required: true
+        default: "gemma3:1b"
+        type: choice
+        options:
+          - gemma3:1b
+          - gemma3:270m
+          - qwen2.5:0.5b
+          - llama3.2:1b
+
+jobs:
+  demo:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test runner
+        run: pip install pytest
+
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama server
+        run: |
+          nohup ollama serve > ollama-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -s http://localhost:11434/api/tags > /dev/null; then
+              echo "Ollama is up"; exit 0
+            fi
+            sleep 2
+          done
+          echo "Ollama did not start"; cat ollama-server.log; exit 1
+
+      - name: Pull the model
+        run: ollama pull "${{ inputs.model }}"
+
+      - name: Build the sample messy folder
+        run: |
+          python demo/make_mess.py demo/messy
+          find demo/messy | sort
+
+      - name: Run the agent — dry-run plan
+        env:
+          SLOTH_MODEL: ${{ inputs.model }}
+        run: |
+          mkdir -p demo-artifacts
+          {
+            echo "=== SlothSort live demo ==="
+            echo "Model: ${{ inputs.model }}"
+            echo "Date: $(date -u --iso-8601=seconds)"
+            echo
+            echo "--- DRY RUN (plan only, nothing moves) ---"
+            python -m slothsort demo/messy
+          } 2>&1 | tee demo-artifacts/transcript.txt
+
+      - name: Run the agent — apply (auto-confirmed), then undo
+        env:
+          SLOTH_MODEL: ${{ inputs.model }}
+        run: |
+          {
+            echo
+            echo "--- APPLY (confirmation piped in) ---"
+            echo "y" | python -m slothsort demo/messy --apply
+            echo
+            echo "--- Folder after apply ---"
+            find demo/messy | sort
+            echo
+            echo "--- UNDO ---"
+            python -m slothsort undo demo/messy
+            echo
+            echo "--- Folder after undo ---"
+            find demo/messy | sort
+          } 2>&1 | tee -a demo-artifacts/transcript.txt
+          cp demo/messy/.slothsort-trace.jsonl demo-artifacts/trace.jsonl
+
+      - name: Run the test suite
+        run: |
+          python -m pytest -q 2>&1 | tee demo-artifacts/tests.txt
+
+      - name: Upload transcript, trace and test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: slothsort-demo-${{ inputs.model }}
+          path: |
+            demo-artifacts/
+            ollama-server.log
+          if-no-files-found: warn
