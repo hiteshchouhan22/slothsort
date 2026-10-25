@@ -1,7 +1,7 @@
 ---
 title: "SlothSort: I built a tiny agent harness from scratch, then taught it to tidy my Downloads folder so I never have to"
-published: false
-tags: devchallenge, hf26challenge, opensource, ai, python
+published: true
+tags: devchallenge, hf26challenge, opensource, python
 ---
 
 *This is a submission for the [Hacktoberfest Open-Source AI Challenge: Week 3](https://dev.to/challenges/hacktoberfest-week3-2026-10-19) — theme: **Slow and Steady**.*
@@ -31,9 +31,9 @@ The brain is **Gemma 3 (`gemma3:1b`)**, Google's open-weight model, served local
 
 ## Demo
 
-- Repo: [REPO LINK]
+- Repo: https://github.com/hiteshchouhan22/slothsort
 - Live demo (GitHub Actions, one click, real model): the repo ships a `demo.yml` workflow that installs Ollama, pulls `gemma3:1b`, runs the agent against the sample messy folder — plan, apply, undo — and uploads the **full transcript and session trace** as artifacts. No staging, no mocked model.
-- A local run transcript and instructions are also in the repo under `demo/` ([REPO LINK]).
+- A local run transcript and instructions are also in the repo under `demo/` (https://github.com/hiteshchouhan22/slothsort).
 
 ## Why open innovation matters here
 
